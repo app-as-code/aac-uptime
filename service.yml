@@ -1,0 +1,80 @@
+service:
+  name: aac-uptime-kuma
+  image_repo: louislam/uptime-kuma
+  image_tag: nightly2
+  description: A fancy self-hosted monitoring tool.
+  icon: uptime-kuma.png
+  category: Monitoring
+  stage: prod
+  hostname: uptime-kuma
+ports:
+- name: web
+  port: 3001
+  external_port: 23781
+  protocol: TCP
+config:
+  domain_name: example.com
+  generate_hostname: false
+  integrations:
+    homepage:
+      enabled: true
+    autodns:
+      enabled: true
+      create_wildcard: true
+    traefik:
+      enabled: true
+      cert_resolver: ionos
+      entrypoint: websecure
+  schema_version: 2
+stage_overrides:
+  prod:
+    config:
+      generate_hostname: false
+    service:
+      hostname: uptime
+volumes:
+  data:
+    description: Uptime Kuma persistent data storage
+deployment_strategy:
+  main:
+    enabled: true
+    target_stage: prod
+  dev:
+    enabled: true
+    target_stage: dev
+  test:
+    enabled: false
+    target_stage: test
+  ansible-dev:
+    enabled: true
+    target_stage: dev
+  iac-dev:
+    enabled: true
+    target_stage: dev
+  template-dev:
+    enabled: true
+    target_stage: dev
+deployments:
+  docker_compose:
+    restart_policy: always
+    host_base_path: /export/docker
+    security_opt:
+    - no-new-privileges:true
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: '10'
+    volumes:
+    - data:/app/data
+    environment:
+      HOMEPAGE_WIDGET_SLUG: '{{ vars.HOMEPAGE_WIDGET_SLUG }}'
+      PUID: '{{ vars.PUID }}'
+      PGID: '{{ vars.PGID }}'
+      TZ: '{{ vars.TZ }}'
+vars:
+  HOMEPAGE_WIDGET_SLUG: status
+  PUID: '1000'
+  PGID: '1000'
+  TZ: Europe/Berlin
+secrets: {}

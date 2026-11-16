@@ -1,0 +1,71 @@
+services:
+  # --- Main Application Service ---
+  aac-uptime-kuma:
+    image: "louislam/uptime-kuma:nightly2"
+    container_name: "aac-uptime-kuma"
+    hostname: "uptime"
+    restart: "always"
+
+
+    environment:
+      HOMEPAGE_WIDGET_SLUG: "status"
+      PUID: "1000"
+      PGID: "1000"
+      TZ: "Europe/Berlin"
+
+    ports:
+      - "23781:3001/tcp"
+
+    volumes:
+      - "/export/docker/aac-uptime-kuma/data:/app/data"
+
+    networks:
+      - exposed
+      - interconnect
+      - secured
+      - stack_internal
+
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.aac-uptime-kuma.rule: "Host(`uptime.example.com`)"
+      traefik.http.routers.aac-uptime-kuma.entrypoints: "websecure"
+      traefik.http.routers.aac-uptime-kuma.tls: "true"
+      traefik.http.routers.aac-uptime-kuma.tls.certresolver: "ionos"
+      traefik.docker.network: "services-secured"
+      traefik.http.services.aac-uptime-kuma.loadbalancer.server.port: "3001"
+      traefik.http.services.aac-uptime-kuma.loadbalancer.server.scheme: "http"
+      auto-dns.createWildcard.aac-uptime-kuma: "true"
+      auto-dns.customDNS.aac-uptime-kuma: "true"
+      auto-dns.customDOMAIN.aac-uptime-kuma: "example.com"
+      auto-dns.customHost.aac-uptime-kuma: "uptime"
+      homepage.group: "Monitoring"
+      homepage.name: "Uptime Kuma"
+      homepage.href: "https://uptime.example.com"
+      homepage.icon: "uptime-kuma.png"
+      homepage.description: "A fancy self-hosted monitoring tool."
+
+
+    security_opt:
+    - no-new-privileges:true
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: '10'
+
+
+
+networks:
+  secured:
+    name: "services-secured"
+    external: true
+  exposed:
+    name: "services-exposed"
+    external: true
+  interconnect:
+    name: "docker-default"
+    external: true
+  stack_internal:
+    name: "aac-uptime-kuma_stack_internal"
+    driver: "bridge"
+
